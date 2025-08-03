@@ -141,7 +141,8 @@ class DropboxToThreadsUploader:
                     return False
                 status = poll_res.json().get("status")
                 if status == "FINISHED":
-                    time.sleep(10)  # Give time for backend to finalize video
+                    self.send_message("Video processing FINISHED, waiting extra 30 seconds before publish...", level=logging.INFO)
+                    time.sleep(30)  # Increased wait for video backend
                     break
                 elif status == "ERROR":
                     self.send_message(f"❌ Transcode failed for {file.name}: {poll_res.text}", level=logging.ERROR)
@@ -160,25 +161,14 @@ class DropboxToThreadsUploader:
                 time.sleep(5)
 
             # Safe retry-publish block
-            for attempt in range(3):
+            for attempt in range(5):  # Increase retries
                 pub_res = requests.post(publish_url, data=publish_data)
                 if pub_res.status_code == 200:
                     self.send_message(f"✅ Successfully posted to Threads: {file.name}")
                     return True
                 else:
-                    # Check for specific error code (e.g. Threads backend delay)
-                    try:
-                        err_json = pub_res.json()
-                        error_code = err_json.get("error", {}).get("error_subcode")
-                        if error_code == 2207032:
-                            self.send_message(f"⚠️ Threads backend not ready yet, retrying... ({attempt + 1}/3)", level=logging.WARNING)
-                            time.sleep(5)
-                            continue
-                    except Exception:
-                        pass
-                    # Unknown error or not a retryable one
-                    self.send_message(f"❌ Threads publish failed: {file.name}\n{pub_res.text}", level=logging.ERROR)
-                    return False
+                    self.send_message(f"❌ Threads publish failed (attempt {attempt+1}): {file.name}\n{pub_res.text}", level=logging.ERROR)
+                    time.sleep(10)  # Wait longer before retry
             # If all retries failed
             self.send_message(f"❌ Threads publish failed after retries: {file.name}", level=logging.ERROR)
             return False
