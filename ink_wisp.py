@@ -133,7 +133,7 @@ class DropboxToThreadsUploader:
                 self.send_message(f"❌ No creation_id returned for {file.name}", level=logging.ERROR)
                 return False
             # Step 2: Poll status until fully processed
-            max_retries = 40
+            max_retries = 60
             for _ in range(max_retries):
                 poll_res = requests.get(f"{self.THREADS_API_BASE}/{creation_id}", params={"access_token": self.threads_access_token})
                 if poll_res.status_code != 200:
@@ -141,12 +141,12 @@ class DropboxToThreadsUploader:
                     return False
                 status = poll_res.json().get("status")
                 if status == "FINISHED":
-                    time.sleep(5)  # Give time for backend to finalize video
+                    time.sleep(10)  # Give time for backend to finalize video
                     break
                 elif status == "ERROR":
                     self.send_message(f"❌ Transcode failed for {file.name}: {poll_res.text}", level=logging.ERROR)
                     return False
-                time.sleep(2)
+                time.sleep(4)
             # Step 3: Publish
             publish_url = f"{self.THREADS_API_BASE}/{self.threads_user_id}/threads_publish"
             publish_data = {
