@@ -142,7 +142,7 @@ class DropboxToThreadsUploader:
                 status = poll_res.json().get("status")
                 if status == "FINISHED":
                     self.send_message("Video processing FINISHED, waiting extra 30 seconds before publish...", level=logging.INFO)
-                    time.sleep(30)  # Increased wait for video backend
+                    time.sleep(3)  # Increased wait for video backend
                     break
                 elif status == "ERROR":
                     self.send_message(f"❌ Transcode failed for {file.name}: {poll_res.text}", level=logging.ERROR)
