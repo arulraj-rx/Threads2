@@ -226,7 +226,7 @@ class DropboxToThreadsUploader:
 ACCOUNTS = [
  
     {
-        "account_name": "ink_wisp",
+        "account_name": "ink_wisps",
         "threads_user_id": os.getenv("THREADS_USER_ID"),
         "threads_access_token": os.getenv("THREADS_ACCESS_TOKEN"),
         "dropbox_app_key": os.getenv("DROPBOX_APP_KEY"),
