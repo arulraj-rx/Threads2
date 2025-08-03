@@ -161,14 +161,27 @@ class DropboxToThreadsUploader:
                 time.sleep(5)
 
             # Safe retry-publish block
-            for attempt in range(5):  # Increase retries
+            # Retry publishing until success or timeout (for videos)
+            max_wait = 180  # seconds (3 minutes)
+            interval = 5    # seconds between retries
+            start_time = time.time()
+            while True:
                 pub_res = requests.post(publish_url, data=publish_data)
                 if pub_res.status_code == 200:
                     self.send_message(f"✅ Successfully posted to Threads: {file.name}")
                     return True
                 else:
-                    self.send_message(f"❌ Threads publish failed (attempt {attempt+1}): {file.name}\n{pub_res.text}", level=logging.ERROR)
-                    time.sleep(10)  # Wait longer before retry
+                    self.send_message(
+                        f"❌ Threads publish failed: {file.name}\n{pub_res.text}\nRetrying in {interval}s...",
+                        level=logging.ERROR
+                    )
+                    if time.time() - start_time > max_wait:
+                        self.send_message(
+                            f"❌ Threads publish failed after {int(max_wait)} seconds: {file.name}",
+                            level=logging.ERROR
+                        )
+                        return False
+                    time.sleep(interval)
             # If all retries failed
             self.send_message(f"❌ Threads publish failed after retries: {file.name}", level=logging.ERROR)
             return False
